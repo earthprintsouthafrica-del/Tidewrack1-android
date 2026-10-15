@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tidewrack – Social scheduler</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef2f6;--surface:#fff;--ink:#14213d;--muted:#5b6780;--line:#d5dce6;--accent:#e8912d;--accent-ink:#1d1200;--bad:#b3261e;--ok:#1f7a4d;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0f1626;--surface:#18223a;--ink:#e8edf6;--muted:#9aa7c0;--line:#2b3856;--bad:#ff8a80;--ok:#6fd6a0}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1626;--surface:#18223a;--ink:#e8edf6;--muted:#9aa7c0;--line:#2b3856;--bad:#ff8a80;--ok:#6fd6a0}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Bricolage Grotesque",system-ui,sans-serif}
+main{max-width:960px;margin:0 auto;padding:20px 16px 56px}
+h1{font-size:28px;font-weight:800;letter-spacing:-.02em;margin:0 0 4px}
+h2{font-size:18px;font-weight:600;margin:24px 0 10px}
+.sub{color:var(--muted);margin:0 0 16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+textarea,input,select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px}
+textarea{min-height:100px;resize:vertical}
+label{font-weight:600;display:block;margin:10px 0 4px}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto}
+.tab{background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);font:600 15px inherit;font-family:inherit;padding:10px 12px;cursor:pointer;white-space:nowrap}
+.tab[aria-selected=true]{color:var(--ink);border-color:var(--accent)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.chip{border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:99px;padding:5px 12px;font:600 14px inherit;font-family:inherit;cursor:pointer}
+.chip[aria-pressed=true]{color:#fff;border-color:transparent;background:var(--c)}
+.count{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--muted);font-size:14px}.count.over{color:var(--bad);font-weight:600}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:10px 18px;font:600 16px inherit;font-family:inherit;cursor:pointer}
+.btn.alt{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(112px,1fr));gap:8px;overflow-x:auto;padding-bottom:6px}
+.cal.m{grid-template-columns:repeat(7,minmax(46px,1fr));gap:4px}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px;min-height:140px}
+.m .day{min-height:62px;padding:4px;border-radius:8px}
+.day.today{border-color:var(--accent);border-width:2px}
+.day h3{margin:0 0 6px;font-size:13px;font-weight:600;color:var(--muted)}
+.slot{display:block;width:100%;text-align:left;border:0;border-left:4px solid var(--c);background:var(--bg);color:var(--ink);border-radius:6px;padding:4px 6px;margin-bottom:6px;font:400 12px/1.3 inherit;font-family:inherit;cursor:pointer}
+.slot b{display:block;font-weight:600}.slot span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot.done{opacity:.6}
+.dots{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}.dot{width:9px;height:9px;border-radius:50%}
+.q{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}.q:first-child{border-top:0}
+.q p{margin:0}.q small{color:var(--muted)}.q img,.pv{width:56px;height:56px;object-fit:cover;border-radius:8px}
+.del{margin-left:auto;background:none;border:0;color:var(--muted);font:inherit;cursor:pointer;text-decoration:underline}
+.empty,.note{color:var(--muted);margin:8px 0;font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}.stat b{display:block;font-size:26px;font-weight:800}.stat span{color:var(--muted);font-size:13px}
+.bar{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px}.bar i{display:block;height:14px;border-radius:7px;background:var(--c)}.bar em{font-style:normal;width:84px;flex:none}
+.opt{display:block;width:100%;text-align:left;margin-top:8px;background:var(--bg);color:var(--ink);border:1.5px solid var(--line);border-radius:10px;padding:10px;font:inherit;cursor:pointer}
+.sw{display:flex;align-items:center;gap:10px;font-weight:600}.sw input{width:22px;height:22px;accent-color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
+.toast.on{opacity:1}[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<h1>Tidewrack</h1>
+<p class="sub">Write, schedule, automate and track your posts in one place.</p>
+<div class="row" style="margin:0 0 16px"><select id="brand" aria-label="Brand account" style="max-width:240px;font-weight:600"></select><button class="btn alt" id="bnew">Add brand</button><button class="btn alt" id="bren">Rename</button><button class="btn alt" id="bdel">Delete</button></div>
+<div class="card" id="bform" hidden style="margin-bottom:16px"><label for="bname" style="margin-top:0">Brand name</label><input id="bname" maxlength="40"><div class="row"><button class="btn" id="bsave">Save brand</button><button class="btn alt" id="bcancel">Cancel</button></div></div>
+<div class="tabs" role="tablist" id="tabs">
+<button class="tab" role="tab" data-t="compose" aria-selected="true">Compose</button>
+<button class="tab" role="tab" data-t="cal" aria-selected="false">Calendar</button>
+<button class="tab" role="tab" data-t="auto" aria-selected="false">Autopilot</button>
+<button class="tab" role="tab" data-t="stats" aria-selected="false">Analytics</button>
+<button class="tab" role="tab" data-t="growth" aria-selected="false">Growth</button>
+</div>
+
+<section id="p-compose">
+<div class="card">
+<label for="txt" style="margin-top:0">New post</label>
+<textarea id="txt" placeholder="What do you want to share?"></textarea>
+<div class="row"><button class="btn alt" id="ai" hidden>Write with AI</button><label class="btn alt" style="margin:0;font-weight:600" for="img">Add image</label><input type="file" id="img" accept="image/*" hidden><img id="pv" class="pv" alt="Attached image preview" hidden><button class="del" id="rmimg" hidden>Remove image</button></div>
+<div id="aibox" hidden><label for="topic">What is the post about?</label><input id="topic" placeholder="e.g. new autumn menu at our café"><div class="row"><button class="btn" id="aigo">Generate 3 options</button></div><div id="aiopts"></div></div>
+<div class="row" id="plats"></div>
+<div class="row"><span class="count" id="cnt" style="margin-left:0"></span></div>
+<label for="when">Publish time</label>
+<div class="row" style="margin-top:0"><input type="datetime-local" id="when" style="max-width:240px"><button class="btn" id="go" style="margin-left:auto">Schedule post</button></div>
+</div>
+</section>
+
+<section id="p-cal" hidden>
+<div class="row" style="margin-top:0"><button class="btn alt" id="vw" aria-pressed="true">Week</button><button class="btn alt" id="vm">Month</button><strong id="mname" style="margin-left:auto"></strong></div>
+<div class="cal" id="cal" style="margin-top:12px"></div>
+<h2>Queue</h2>
+<section class="card" id="queue"></section>
+</section>
+
+<section id="p-auto" hidden>
+<div class="card">
+<label class="sw" style="margin-top:0"><input type="checkbox" id="pilot"> Auto-publish due posts</label>
+<p class="note">While this page is open, posts that reach their time are marked as published. Connecting real accounts is not available here, so nothing is sent to the networks.</p>
+<label class="sw" style="margin-top:14px"><input type="checkbox" id="norev"> Post without review</label>
+<p class="note">Off: Autopilot posts wait for your approval. On: they publish on their own when you are busy or away. Turn on auto-publish above too, and keep this page open.</p>
+<h2 style="margin-top:16px">Autopilot writer</h2>
+<label for="atopic">About your brand</label>
+<textarea id="atopic" style="min-height:70px" placeholder="e.g. A neighborhood café that roasts its own beans"></textarea>
+<div class="grid2"><div><label for="atone">Tone</label><select id="atone"><option>Friendly</option><option>Professional</option><option>Playful</option><option>Bold</option></select></div>
+<div><label for="afreq">Schedule</label><select id="afreq"><option value="7">Every day</option><option value="5">Weekdays</option><option value="3">3 times a week</option></select></div></div>
+<label for="atime">Post time</label><input type="time" id="atime" value="09:00" style="max-width:160px">
+<label style="margin-bottom:0">Channels</label><div class="row" id="aplats" style="margin-top:6px"></div>
+<div class="row"><button class="btn" id="agen" hidden>Write and schedule next 7 days</button></div>
+<p class="note" id="anote">AI writing needs a Claude-connected view of this page.</p>
+</div>
+</section>
+
+<section id="p-stats" hidden>
+<div class="stats" id="stats"></div>
+<h2>Reach by channel</h2><div class="card" id="bars"></div>
+<h2>Top posts</h2><div class="card" id="top"></div>
+<p class="note">Figures are sample estimates for published posts. Real analytics need connected accounts.</p>
+</section>
+<section id="p-growth" hidden>
+<div class="card"><label for="ggoal" style="margin-top:0">Goal</label><select id="ggoal"><option>More followers</option><option>More likes and shares</option><option>More views</option></select>
+<label for="gtype">Campaign</label><select id="gtype"><option>Free guide or checklist</option><option>Giveaway with clear rules</option><option>30-day challenge</option><option>Behind-the-scenes series</option></select>
+<label for="goffer">What can you offer?</label><input id="goffer" placeholder="e.g. a free home-brewing guide">
+<div class="row"><button class="btn" id="ggen" hidden>Write campaign</button></div><div id="gout"></div><div class="row"><button class="btn" id="gadd" hidden>Schedule these 3 posts</button></div>
+<p class="note">Posts use the channels and tone saved for this brand in Autopilot.</p></div>
+<h2>Habits that grow an audience</h2>
+<div class="card"><ul style="margin:0;padding-left:20px"><li>Open with a clear promise in the first line.</li><li>Reply to every comment in the first hour.</li><li>Pin your best post and put one link in your bio.</li><li>Collaborate with accounts that share your audience.</li><li>Post a short video each week, since video reaches the most new people.</li><li>Follow platform rules for giveaways, including disclosure.</li></ul></div>
+</section>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const P={x:{n:'X',l:280,c:'#5b6b8c'},ig:{n:'Instagram',l:2200,c:'#b8458f'},li:{n:'LinkedIn',l:3000,c:'#1f8a96'},fb:{n:'Facebook',l:5000,c:'#3b6fd8'},tt:{n:'TikTok',l:2200,c:'#d1365c'},th:{n:'Threads',l:500,c:'#7a5af0'},bs:{n:'Bluesky',l:300,c:'#2b84d6'},yt:{n:'YouTube',l:5000,c:'#c93a3a'},pin:{n:'Pinterest',l:500,c:'#b02a37'}};
+const $=s=>document.querySelector(s),KEY='tidewrack-v2';
+let data,posts=[],sel=new Set(['x','li']),asel=new Set(['ig','li']),img='',view='w',S=null,auto=false;
+const at=(d,h,m)=>{const t=new Date();t.setDate(t.getDate()+d);t.setHours(h,m,0,0);return t.toISOString()};
+function seed(){return [{id:1,text:'Autumn menu is live. Come try the roasted squash toast.',p:['ig','li'],at:at(0,17,30)},
+{id:2,text:'Behind the scenes: how we source our beans.',p:['x','fb'],at:at(1,9,0)},
+{id:3,text:'We are hiring a weekend barista. Details in bio.',p:['li','th'],at:at(2,12,15)},
+{id:4,text:'Friday playlist is up. Tell us your pick.',p:['ig','tt'],at:at(4,8,45)},
+{id:5,text:'Thank you for 1,000 mornings with you.',p:['ig','x','li'],at:at(-1,8,0),done:1},
+{id:6,text:'New single-origin from Huila, now on the bar.',p:['bs','th','x'],at:at(-3,10,0),done:1},
+{id:7,text:'Meet the team behind your flat white.',p:['li','fb'],at:at(-5,13,0),done:1},
+{id:8,text:'Rainy day special: 2-for-1 pastries.',p:['ig','fb'],at:at(-6,7,30),done:1}]}
+function load(){let d=null;try{d=JSON.parse(localStorage.getItem('tidewrack-v3'))}catch(e){}
+if(!d||!d.brands){d={cur:'b1',brands:[{id:'b1',name:'Brew & Bean Café',about:'A neighborhood café that roasts its own beans',tone:'Friendly',chans:['ig','li']},{id:'b2',name:'Northside Fitness',about:'A community gym with strength and mobility classes',tone:'Bold',chans:['ig','x']}],posts:{b1:seed(),b2:[{id:101,text:'New 6am strength class starts Monday. Spots are limited.',p:['ig','x'],at:at(1,6,0)},{id:102,text:'Mobility minute: 3 stretches for desk shoulders.',p:['ig','tt'],at:at(3,12,0)},{id:103,text:'Member spotlight: Dana hit her first pull-up!',p:['ig'],at:at(-2,18,0),done:1},{id:104,text:'Our summer challenge winners are in.',p:['x','fb'],at:at(-4,9,0),done:1}]}}}
+data=d;posts=data.posts[data.cur]||[]}
+function save(){data.posts[data.cur]=posts;try{localStorage.setItem('tidewrack-v3',JSON.stringify(data))}catch(e){toast('Saved for this session only')}}
+const fT=d=>d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}),fD=d=>d.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2200)}
+const lim=s=>s.size?Math.min(...[...s].map(k=>P[k].l)):0;
+function chips(el,set,cb){el.innerHTML='';Object.keys(P).forEach(k=>{const b=document.createElement('button');b.className='chip';b.style.setProperty('--c',P[k].c);b.textContent=P[k].n;b.setAttribute('aria-pressed',set.has(k));b.onclick=()=>{set.has(k)?set.delete(k):set.add(k);b.setAttribute('aria-pressed',set.has(k));cb()};el.appendChild(b)})}
+function check(){const n=$('#txt').value.length,l=lim(sel),c=$('#cnt');c.textContent=sel.size?n+' / '+l+' characters':'Pick a channel';c.classList.toggle('over',n>l);$('#go').disabled=!n||n>l||!sel.size||!$('#when').value}
+const H=n=>(Math.imul(n,2654435761)>>>0)%1000;
+function met(p){const r=Math.round((400+H(p.id)*2.2)*(0.6+p.p.length*0.4));return{r,e:Math.round(r*(0.04+H(p.id+7)/12000)),c:Math.round(r*(0.01+H(p.id+3)/30000))}}
+function draw(){
+posts.sort((a,b)=>new Date(a.at)-new Date(b.at));
+const w=$('#cal'),now=new Date();w.innerHTML='';w.className='cal'+(view==='m'?' m':'');
+const slot=p=>{const b=document.createElement('button');b.className='slot'+(p.done?' done':'');b.style.setProperty('--c',P[p.p[0]].c);b.innerHTML='<b>'+fT(new Date(p.at))+(p.done?' ✓':'')+(p.rev?' · review':'')+'</b><span></span>';b.lastChild.textContent=p.text;b.onclick=()=>edit(p);return b};
+if(view==='w'){$('#mname').textContent='';for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()+i);const c=document.createElement('div');c.className='day'+(i?'':' today');c.innerHTML='<h3>'+(i?fD(d):'Today')+'</h3>';posts.filter(p=>new Date(p.at).toDateString()===d.toDateString()).forEach(p=>c.appendChild(slot(p)));w.appendChild(c)}}
+else{const y=now.getFullYear(),mo=now.getMonth();$('#mname').textContent=now.toLocaleDateString([],{month:'long',year:'numeric'});
+['S','M','T','W','T','F','S'].forEach(x=>{const h=document.createElement('div');h.className='note';h.style.textAlign='center';h.textContent=x;w.appendChild(h)});
+for(let i=0;i<new Date(y,mo,1).getDay();i++)w.appendChild(document.createElement('div'));
+for(let d=1;d<=new Date(y,mo+1,0).getDate();d++){const dt=new Date(y,mo,d),c=document.createElement('div');c.className='day'+(dt.toDateString()===now.toDateString()?' today':'');c.innerHTML='<h3>'+d+'</h3><div class="dots"></div>';const ds=c.lastChild;posts.filter(p=>new Date(p.at).toDateString()===dt.toDateString()).forEach(p=>{const i=document.createElement('i');i.className='dot';i.title=p.text;i.style.background=P[p.p[0]].c;ds.appendChild(i)});w.appendChild(c)}}
+const q=$('#queue');q.innerHTML=posts.length?'':'<p class="empty">Nothing scheduled. Write a post to fill your queue.</p>';
+posts.forEach(p=>{const d=new Date(p.at),r=document.createElement('div');r.className='q';
+r.innerHTML=(p.img?'<img alt="Attached image">':'')+'<div><p></p><small>'+fD(d)+' at '+fT(d)+(p.done?' · Published':p.rev?' · Needs review':'')+'</small><div class="dots">'+p.p.map(k=>'<i class="dot" title="'+P[k].n+'" style="background:'+P[k].c+'"></i>').join('')+'</div></div>'+(p.rev?'<button class="btn" style="padding:6px 12px">Approve</button>':'')+'<button class="del">Delete</button>';
+r.querySelector('p').textContent=p.text;if(p.img)r.querySelector('img').src=p.img;
+const ap=r.querySelector('.btn');if(ap)ap.onclick=()=>{p.rev=0;save();draw();toast('Approved')};
+r.querySelector('.del').onclick=()=>{posts=posts.filter(x=>x.id!==p.id);save();draw();toast('Deleted')};q.appendChild(r)});
+stats()}
+function stats(){const d=posts.filter(p=>p.done),T={r:0,e:0,c:0},by={};
+d.forEach(p=>{const m=met(p);T.r+=m.r;T.e+=m.e;T.c+=m.c;p.p.forEach(k=>by[k]=(by[k]||0)+Math.round(m.r/p.p.length))});
+$('#stats').innerHTML=[['Reach',T.r],['Engagements',T.e],['Link clicks',T.c]].map(a=>'<div class="stat"><b>'+a[1].toLocaleString()+'</b><span>'+a[0]+'</span></div>').join('');
+const mx=Math.max(1,...Object.values(by)),B=$('#bars');B.innerHTML=Object.keys(by).length?'':'<p class="empty">No published posts yet.</p>';
+Object.entries(by).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{const r=document.createElement('div');r.className='bar';r.innerHTML='<em>'+P[k].n+'</em><i style="width:'+Math.round(v/mx*100)+'%;--c:'+P[k].c+'"></i><span>'+v.toLocaleString()+'</span>';B.appendChild(r)});
+const t=$('#top');t.innerHTML=d.length?'':'<p class="empty">Published posts will rank here.</p>';
+[...d].sort((a,b)=>met(b).r-met(a).r).slice(0,3).forEach(p=>{const m=met(p),r=document.createElement('div');r.className='q';r.innerHTML='<div><p></p><small>'+m.r.toLocaleString()+' reach · '+m.e+' engagements</small></div>';r.querySelector('p').textContent=p.text;t.appendChild(r)})}
+function edit(p){$('#txt').value=p.text;sel=new Set(p.p);img=p.img||'';pv();chips($('#plats'),sel,check);posts=posts.filter(x=>x.id!==p.id);save();draw();check();tab('compose');toast('Editing post')}
+function pv(){$('#pv').hidden=$('#rmimg').hidden=!img;if(img)$('#pv').src=img}
+function tab(t){document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));['compose','cal','auto','stats','growth'].forEach(k=>$('#p-'+k).hidden=k!==t)}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+$('#vw').onclick=()=>{view='w';draw()};$('#vm').onclick=()=>{view='m';draw()};
+$('#txt').oninput=check;$('#when').oninput=check;
+$('#img').onchange=e=>{const f=e.target.files[0];if(!f)return;const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const s=Math.min(1,640/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*s;c.height=im.height*s;c.getContext('2d').drawImage(im,0,0,c.width,c.height);img=c.toDataURL('image/jpeg',.7);pv();URL.revokeObjectURL(u)};im.src=u;e.target.value=''};
+$('#rmimg').onclick=()=>{img='';pv()};
+$('#go').onclick=()=>{posts.push({id:Date.now(),text:$('#txt').value.trim(),p:[...sel],at:new Date($('#when').value).toISOString(),img});save();$('#txt').value='';img='';pv();draw();check();toast('Scheduled')};
+$('#pilot').onchange=e=>{auto=e.target.checked;tick();toast(auto?'Auto-publish on':'Auto-publish off')};
+function tick(){if(!auto)return;const n=new Date();let c=0;data.posts[data.cur]=posts;Object.values(data.posts).forEach(l=>l.forEach(p=>{if(!p.done&&!p.rev&&new Date(p.at)<=n){p.done=1;c++}}));if(c){save();draw();toast(c+' post'+(c>1?'s':'')+' published')}}
+setInterval(tick,15000);
+async function ask(pr){return await S.json(pr)}
+$('#ai').onclick=()=>{$('#aibox').hidden=!$('#aibox').hidden;$('#topic').focus()};
+$('#aigo').onclick=async()=>{const t=$('#topic').value.trim();if(!t||!S)return;const b=$('#aigo');b.disabled=true;b.textContent='Writing…';
+try{const l=Math.min(lim(sel)||280,280),o=await ask('Write 3 different social media posts about: '+t+'. Each under '+l+' characters, ready to publish, no hashtags spam (max 2). Return ONLY a JSON array of 3 strings.');
+const el=$('#aiopts');el.innerHTML='';o.slice(0,3).forEach(s=>{const x=document.createElement('button');x.className='opt';x.textContent=s;x.onclick=()=>{$('#txt').value=s;check();el.innerHTML=''};el.appendChild(x)})}
+catch(e){toast(e&&e.code==='not_granted'?'AI access was declined':'Could not write posts. Try again.')}b.disabled=false;b.textContent='Generate 3 options'};
+$('#agen').onclick=async()=>{const t=$('#atopic').value.trim();if(!t){toast('Describe your brand first');return}if(!asel.size){toast('Pick a channel');return}
+const f=+$('#afreq').value,b=$('#agen');b.disabled=true;b.textContent='Writing…';
+try{const l=Math.min(lim(asel),280),o=await ask('You write social posts for this brand: '+t+'. Tone: '+$('#atone').value+'. Write '+f+' distinct posts, each under '+l+' characters, varied topics and formats (tips, questions, announcements, behind the scenes). Return ONLY a JSON array of '+f+' strings.');
+const [h,m]=$('#atime').value.split(':').map(Number),offs=f===3?[1,3,5]:[];let d=1;
+o.slice(0,f).forEach((s,i)=>{let dt=new Date();if(f===3)dt.setDate(dt.getDate()+offs[i]);else{if(f===5)while([0,6].includes(new Date(Date.now()+d*864e5).getDay()))d++;dt.setDate(dt.getDate()+d);d++}dt.setHours(h,m,0,0);posts.push({id:Date.now()+i,text:s,p:[...asel],at:dt.toISOString(),rev:brand().norev?0:1})});
+save();draw();toast(o.length+' posts scheduled');tab('cal')}catch(e){toast('Could not write posts. Try again.')}b.disabled=false;b.textContent='Write and schedule next 7 days'};
+const t0=new Date();t0.setDate(t0.getDate()+1);t0.setHours(9,0,0,0);$('#when').value=new Date(t0-t0.getTimezoneOffset()*6e4).toISOString().slice(0,16);
+const brand=()=>data.brands.find(b=>b.id===data.cur);
+function saveB(){const b=brand();b.about=$('#atopic').value;b.tone=$('#atone').value;b.chans=[...asel];b.norev=$('#norev').checked;save()}
+function brandSel(){const s=$('#brand');s.innerHTML='';data.brands.forEach(b=>{const o=document.createElement('option');o.value=b.id;o.textContent=b.name;s.appendChild(o)});s.value=data.cur;$('#bdel').disabled=data.brands.length<2;$('#bdel').textContent='Delete'}
+function switchTo(id,init){if(!init)save();data.cur=id;posts=data.posts[id]||(data.posts[id]=[]);const b=brand();sel=new Set(b.chans);asel=new Set(b.chans);$('#txt').value='';img='';pv();$('#aiopts').innerHTML='';$('#atopic').value=b.about;$('#atone').value=b.tone;$('#norev').checked=!!b.norev;chips($('#plats'),sel,check);chips($('#aplats'),asel,saveB);brandSel();draw();check()}
+let bmode='';
+$('#brand').onchange=e=>switchTo(e.target.value);
+$('#atopic').oninput=saveB;$('#atone').onchange=saveB;$('#norev').onchange=saveB;
+$('#bnew').onclick=()=>{bmode='new';$('#bname').value='';$('#bform').hidden=false;$('#bname').focus()};
+$('#bren').onclick=()=>{bmode='ren';$('#bname').value=brand().name;$('#bform').hidden=false;$('#bname').focus()};
+$('#bcancel').onclick=()=>{$('#bform').hidden=true};
+$('#bsave').onclick=()=>{const n=$('#bname').value.trim();if(!n){toast('Enter a brand name');return}if(bmode==='new'){const id='b'+Date.now();data.brands.push({id,name:n,about:'',tone:'Friendly',chans:['x','li']});data.posts[id]=[];$('#bform').hidden=true;switchTo(id);toast('Added '+n)}else{brand().name=n;save();brandSel();$('#bform').hidden=true;toast('Renamed')}};
+$('#bdel').onclick=()=>{const b=$('#bdel');if(b.textContent==='Delete'){b.textContent='Tap again to delete';return}const id=data.cur;data.brands=data.brands.filter(x=>x.id!==id);delete data.posts[id];switchTo(data.brands[0].id,true);save();toast('Brand deleted')};
+let gen=[];
+$('#ggen').onclick=async()=>{if(!S)return;const b=brand(),btn=$('#ggen');btn.disabled=true;btn.textContent='Writing…';
+try{const r=await S.json('Brand: '+b.name+' ('+b.about+'). Tone: '+b.tone+'. Goal: '+$('#ggoal').value+'. Campaign: '+$('#gtype').value+'. Offer: '+($('#goffer').value.trim()||'your choice')+'. Write 3 organic posts that give people a genuine reason to follow, like and share. Each under 260 characters, a strong first line, one clear call to action. No fake urgency and no engagement bait that breaks platform rules. Return ONLY a JSON array of 3 strings.');
+gen=r.slice(0,3);const o=$('#gout');o.innerHTML='';gen.forEach(s=>{const d=document.createElement('div');d.className='opt';d.textContent=s;o.appendChild(d)});$('#gadd').hidden=!gen.length}
+catch(e){toast('Could not write the campaign. Try again.')}btn.disabled=false;btn.textContent='Write campaign'};
+$('#gadd').onclick=()=>{const ch=asel.size?[...asel]:['x','li'];[1,3,5].forEach((d,i)=>{if(!gen[i])return;const t=new Date();t.setDate(t.getDate()+d);t.setHours(10,0,0,0);posts.push({id:Date.now()+i,text:gen[i],p:ch,at:t.toISOString(),rev:brand().norev?0:1})});save();draw();gen=[];$('#gout').innerHTML='';$('#gadd').hidden=true;toast('Campaign scheduled');tab('cal')};
+load();switchTo(data.cur,true);
+(async()=>{try{S=window.claude?await window.claude.use('sample'):null}catch(e){S=null}
+if(S){$('#ggen').hidden=false;$('#ai').hidden=false;$('#agen').hidden=false;$('#anote').textContent='Writes a week of posts in your tone and adds them to the calendar. Review them before they go live.'}})();
+</script>
+</body>
+</html>
